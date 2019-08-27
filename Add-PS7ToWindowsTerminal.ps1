@@ -2,7 +2,7 @@ $terminalFolderPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wek
 # Get Windows Terminal settings file
 $settingsFilePath = Join-Path $terminalFolderPath 'profiles.json'
 $json = Get-Content $settingsFilePath | ConvertFrom-Json
-# Get PS Core profile
+# Get profiles
 $profiles = $json.profiles
 # Make a copy of first profile and configure for PS7 x64
 $ps7 = $profiles[0].psobject.Copy()
@@ -13,6 +13,6 @@ $ps7.guid = '{' + (New-Guid).ToString() + '}'
 $pwsh7IconPath = Join-Path $terminalFolderPath 'pwsh7.ico'
 Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/weebsnore/Add-PS7ToWindowsTerminal/master/pwsh7.ico' -OutFile $pwsh7IconPath
 $ps7.icon = $pwsh7IconPath
-# Write updated settings file
+# Write updated settings file to disk
 $json.profiles = $profiles + $ps7
 $json | ConvertTo-Json | Out-File $settingsFilePath
