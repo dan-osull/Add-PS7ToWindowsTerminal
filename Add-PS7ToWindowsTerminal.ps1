@@ -1,18 +1,21 @@
+# Get Windows Terminal settings
 $terminalFolderPath = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState"
-# Get Windows Terminal settings file
 $settingsFilePath = Join-Path $terminalFolderPath 'profiles.json'
-$json = Get-Content $settingsFilePath | ConvertFrom-Json
-# Get profiles
-$profiles = $json.profiles
-# Make a copy of first profile and configure for PS7 x64
-$ps7 = $profiles[0].psobject.Copy()
-$ps7.name = 'PowerShell 7-preview (x64)'
-$ps7.commandline = 'C:\Program Files\PowerShell\7-preview\pwsh.exe'
-$ps7.guid = '{' + (New-Guid).ToString() + '}'
-# Download and set icon
+[System.Collections.ArrayList]$settings = Get-Content $settingsFilePath
+# Download icon
 $pwsh7IconPath = Join-Path $terminalFolderPath 'pwsh7.ico'
 Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/weebsnore/Add-PS7ToWindowsTerminal/master/pwsh7.ico' -OutFile $pwsh7IconPath
-$ps7.icon = $pwsh7IconPath
-# Write updated settings file to disk
-$json.profiles = $profiles + $ps7
-$json | ConvertTo-Json | Out-File $settingsFilePath
+# Generate PS7 profile JSON
+$ps7profile = @{
+    'guid' = '{' + (New-Guid).ToString() + '}'
+    'name' = 'PowerShell 7-preview (x64)'
+    'commandline' = 'C:\Program Files\PowerShell\7-preview\pwsh.exe'
+    'icon' = $pwsh7IconPath
+} | ConvertTo-Json
+# Append comma to profile JSON
+$ps7profile = $ps7profile + ','
+# Find "profiles" line number
+$profilesLine = ($settings | Select-String '"profiles":').LineNumber
+# Add new profile to JSON and write to disk
+,$settings.Insert($profilesLine+1,$ps7profile)
+$settings | Out-File $settingsFilePath
